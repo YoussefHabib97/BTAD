@@ -1,15 +1,17 @@
-import 'package:btad/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 // Library imports
 import 'dart:async';
 
+// Package imports
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 // Firebase SDK imports
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Widget imports
-import 'package:btad/widgets/email_verification.dart';
+// Screen imports
+import 'package:btad/screens/home_screen.dart';
 
 final _firebaseAuth = FirebaseAuth.instance;
 final _cloudFirestore = FirebaseFirestore.instance;
@@ -21,16 +23,43 @@ class VerifyEmailScreen extends StatefulWidget {
   State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
 }
 
-class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
+class _VerifyEmailScreenState extends State<VerifyEmailScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation _animation;
+
   bool _isEmailVerified = false;
   Timer? timer;
 
   String role = '';
 
+  bool canResendEmail = true;
+  int timeLeft = 30;
+
+  void startCountdown() {
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (timeLeft > 0) {
+          timeLeft--;
+        } else {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
   Future<void> sendVerificationEmail() async {
     try {
       final user = _firebaseAuth.currentUser!;
       await user.sendEmailVerification();
+
+      setState(() => canResendEmail = false);
+      startCountdown();
+      await Future.delayed(Duration(seconds: timeLeft));
+      setState(() {
+        canResendEmail = true;
+        timeLeft = 30;
+      });
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -44,6 +73,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   void initState() {
     super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+
+    _animation = Tween(begin: 0, end: 0).animate(_controller);
 
     _isEmailVerified = _firebaseAuth.currentUser!.emailVerified;
     // Check account role
@@ -62,6 +98,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   void dispose() {
+    _controller.dispose();
     timer?.cancel();
     super.dispose();
   }
@@ -106,11 +143,75 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return !_isEmailVerified
-        ? EmailVerificationWidget(signOut: signOut)
-        : HomeScreen(
-            role: role,
-            user: _firebaseAuth.currentUser!,
-          );
+    _controller.forward();
+
+    if (!_isEmailVerified) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          centerTitle: true,
+          title: Text(
+            "Verify Email",
+            style: TextStyle(color: Theme.of(context).cardColor),
+          ),
+          actions: [
+            IconButton(
+              onPressed: signOut,
+              icon: FaIcon(
+                FontAwesomeIcons.arrowRightFromBracket,
+                color: Theme.of(context).cardColor,
+              ),
+            ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "A verification email has been sent to you.\nPlease check your inbox.",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      color: Theme.of(context).cardColor,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: canResendEmail ? sendVerificationEmail : null,
+                icon: const FaIcon(FontAwesomeIcons.envelope),
+                label: const Text("Resend Email"),
+              ),
+              const SizedBox(height: 8),
+              AnimatedOpacity(
+                opacity: canResendEmail ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 500),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(512),
+                  child: Container(
+                    alignment: Alignment.center,
+                    width: 64,
+                    height: 64,
+                    color: Theme.of(context).cardColor,
+                    child: Text(
+                      timeLeft.toString(),
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            color: Theme.of(context).primaryColor,
+                            fontSize: 24,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return HomeScreen(
+        user: _firebaseAuth.currentUser!,
+      );
+    }
   }
 }

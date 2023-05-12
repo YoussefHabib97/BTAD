@@ -9,11 +9,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String role;
   final User user;
   const HomeScreen({
     super.key,
-    required this.role,
     required this.user,
   });
 
@@ -54,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.deepPurple[200],
       appBar: AppBar(
-        title: Text("${widget.user.email!}\n$role"),
+        title: Text("$widget.user.email!"),
         backgroundColor: Colors.deepPurple[200],
         actions: [
           IconButton(

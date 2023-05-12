@@ -11,7 +11,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 // Screen imports
 import 'package:btad/screens/authentication_screen.dart';
 import 'package:btad/screens/verify_email_screen.dart';
-import 'package:btad/screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
