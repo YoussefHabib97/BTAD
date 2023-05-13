@@ -1,3 +1,4 @@
+import 'package:btad/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 // Package imports
@@ -17,6 +18,31 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    bool inDebugMode = false;
+    assert(() {
+      inDebugMode = true;
+      return true;
+    }());
+
+    if (inDebugMode) {
+      return ErrorWidget(details.exception);
+    }
+    return Container(
+      alignment: Alignment.center,
+      child: Text(
+        "Error\n${details.exception}",
+        style: const TextStyle(
+          color: Colors.red,
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  };
+
   runApp(const ApplicationRoot());
 }
 
@@ -31,9 +57,11 @@ class ApplicationRoot extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.light,
         textTheme: GoogleFonts.poppinsTextTheme(),
-        colorSchemeSeed: Colors.deepPurple,
+        colorSchemeSeed: Colors.deepPurpleAccent,
         useMaterial3: true,
       ),
+      darkTheme: ThemeData.dark(useMaterial3: true),
+      themeMode: ThemeMode.system,
       home: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
@@ -43,7 +71,12 @@ class ApplicationRoot extends StatelessWidget {
             );
           }
           if (snapshot.hasData) {
-            return const VerifyEmailScreen();
+            if (FirebaseAuth.instance.currentUser == null) {
+              return const AuthenticationScreen();
+            } else if (!FirebaseAuth.instance.currentUser!.emailVerified) {
+              return const VerifyEmailScreen();
+            }
+            return HomeScreen(user: FirebaseAuth.instance.currentUser!);
           }
           return const AuthenticationScreen();
         },

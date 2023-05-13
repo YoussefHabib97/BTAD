@@ -12,7 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
 
-List<String> accountTypes = [
+List<String> accountRoles = [
   'admin',
   'doctor',
   'patient',
@@ -70,9 +70,15 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
           'email': _enteredEmail,
           'role': currentOption,
         });
+        setState(() {
+          _isAuthenticating = false;
+        });
       } else {
         await _firebaseAuth.signInWithEmailAndPassword(
             email: _enteredEmail, password: _enteredPassword);
+        setState(() {
+          _isAuthenticating = true;
+        });
       }
     } on FirebaseAuthException catch (error) {
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -83,7 +89,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
             label: "Dismiss",
             onPressed: () => ScaffoldMessenger.of(context).clearSnackBars(),
           ),
-          duration: const Duration(days: 1),
+          duration: const Duration(seconds: 5),
         ),
       );
       setState(() {
@@ -92,20 +98,15 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     }
   }
 
-  String currentOption = accountTypes[0];
+  String currentOption = accountRoles[0];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        forceMaterialTransparency: true,
         title: Text(
           !_isLogin ? "Sign Up" : "Sign In",
-          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
         ),
         centerTitle: true,
       ),
@@ -127,7 +128,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                   child: FaIcon(
                     FontAwesomeIcons.personDress,
                     size: 256,
-                    color: Theme.of(context).colorScheme.onSecondary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 Card(
@@ -141,6 +142,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             TextFormField(
+                              readOnly: _isAuthenticating,
                               controller: _emailController,
                               autocorrect: false,
                               textCapitalization: TextCapitalization.none,
@@ -169,6 +171,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                               },
                             ),
                             TextFormField(
+                              readOnly: _isAuthenticating,
                               controller: _passwordController,
                               obscureText: !_passwordIsVisible,
                               decoration: InputDecoration(
@@ -206,10 +209,10 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                   Column(
                                     children: [
                                       RadioListTile(
-                                        value: accountTypes[0],
+                                        value: accountRoles[0],
                                         groupValue: currentOption,
                                         title: Text(
-                                          accountTypes[0].capitalize(),
+                                          accountRoles[0].capitalize(),
                                         ),
                                         onChanged: !_isAuthenticating
                                             ? (value) {
@@ -221,7 +224,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                             : null,
                                       ),
                                       RadioListTile(
-                                        value: accountTypes[1],
+                                        value: accountRoles[1],
                                         groupValue: currentOption,
                                         onChanged: !_isAuthenticating
                                             ? (value) {
@@ -232,11 +235,11 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                               }
                                             : null,
                                         title: Text(
-                                          accountTypes[1].capitalize(),
+                                          accountRoles[1].capitalize(),
                                         ),
                                       ),
                                       RadioListTile(
-                                        value: accountTypes[2],
+                                        value: accountRoles[2],
                                         groupValue: currentOption,
                                         onChanged: !_isAuthenticating
                                             ? (value) {
@@ -247,7 +250,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                               }
                                             : null,
                                         title: Text(
-                                          accountTypes[2].capitalize(),
+                                          accountRoles[2].capitalize(),
                                         ),
                                       ),
                                     ],

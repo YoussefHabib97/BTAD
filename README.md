@@ -1,6 +1,7 @@
-# btad
+# Breast Tumor and Alzheimer's Detection (BTAD)
 
 A new Flutter project.
+Made using Flutter 3.10.0
 
 ## Getting Started
 

@@ -58,6 +58,7 @@ dependencies:
 
   # Extra packages
   liquid_pull_to_refresh: ^3.0.1
+  async: ^2.11.0
 
 dev_dependencies:
   flutter_test:

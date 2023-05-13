@@ -50,90 +50,39 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple[200],
+      // backgroundColor: Colors.deepPurple[200],
       appBar: AppBar(
-        title: Text("$widget.user.email!"),
-        backgroundColor: Colors.deepPurple[200],
+        title: Text(widget.user.email!),
+        // backgroundColor: Colors.deepPurple[200],
         actions: [
           IconButton(
             onPressed: signOut,
-            icon: FaIcon(
+            icon: const FaIcon(
               FontAwesomeIcons.arrowRightFromBracket,
-              color: Theme.of(context).cardColor,
             ),
           )
         ],
       ),
       body: LiquidPullToRefresh(
-        color: Colors.deepPurple,
-        // height: MediaQuery.of(context).size.height / 2,
+        color: Colors.deepPurpleAccent,
         showChildOpacityTransition: false,
         backgroundColor: Colors.deepPurple[200],
         animSpeedFactor: 3,
         onRefresh: handleRefresh,
-        child: ListView(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  height: 300,
-                  color: Colors.deepPurple,
+        child: ListView.builder(
+          itemCount: 3,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              child: Container(
+                height: 300,
+                decoration: BoxDecoration(
+                  // color: Colors.deepPurple,
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  height: 300,
-                  color: Colors.deepPurple,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  height: 300,
-                  color: Colors.deepPurple,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  height: 300,
-                  color: Colors.deepPurple,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  height: 300,
-                  color: Colors.deepPurple,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  height: 300,
-                  color: Colors.deepPurple,
-                ),
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
