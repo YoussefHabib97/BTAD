@@ -30,8 +30,12 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
   final _formKey = GlobalKey<FormState>();
   late String _enteredEmail;
   late String _enteredPassword;
+  late String _firstName;
+  late String _lastName;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   bool _passwordIsVisible = false;
   bool _isLogin = true;
 
@@ -40,6 +44,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     super.initState();
     _emailController.addListener(() => setState(() {}));
     _passwordController.addListener(() => setState(() {}));
+    _firstNameController.addListener(() => setState(() {}));
+    _lastNameController.addListener(() => setState(() {}));
   }
 
   // Authentication
@@ -48,7 +54,6 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     bool isValid = _formKey.currentState!.validate();
 
     if (!isValid) return;
-
     try {
       // Trigger loading spinner by flagging the authentication boolean
       setState(() {
@@ -60,22 +65,28 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
 
         final userCredentials =
             await _firebaseAuth.createUserWithEmailAndPassword(
-                email: _enteredEmail, password: _enteredPassword);
+          email: _enteredEmail,
+          password: _enteredPassword,
+        );
 
         // Create a document of the user using their uid and set custom fields
         await _firebaseFirestore
             .collection('users')
-            .doc(userCredentials.user!.uid)
+            .doc(userCredentials.user!.email)
             .set({
           'email': _enteredEmail,
-          'role': currentOption,
+          'role': currentRole,
+          'first_name': _firstName,
+          'last_name': _lastName,
         });
         setState(() {
           _isAuthenticating = false;
         });
       } else {
         await _firebaseAuth.signInWithEmailAndPassword(
-            email: _enteredEmail, password: _enteredPassword);
+          email: _enteredEmail,
+          password: _enteredPassword,
+        );
         setState(() {
           _isAuthenticating = true;
         });
@@ -98,7 +109,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     }
   }
 
-  String currentOption = accountRoles[0];
+  String currentRole = accountRoles[0];
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +152,74 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (!_isLogin)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      readOnly: _isAuthenticating,
+                                      controller: _firstNameController,
+                                      decoration: InputDecoration(
+                                        suffix: _firstNameController
+                                                .text.isNotEmpty
+                                            ? IconButton(
+                                                onPressed: !_isAuthenticating
+                                                    ? () => _firstNameController
+                                                        .clear()
+                                                    : null,
+                                                icon: const FaIcon(
+                                                  FontAwesomeIcons.xmark,
+                                                ),
+                                              )
+                                            : null,
+                                        labelText: 'First Name',
+                                      ),
+                                      onChanged: (value) => _firstName = value,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter a first name';
+                                        }
+                                        if (value.length < 2) {
+                                          return 'Please enter at least 2 characters';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: TextFormField(
+                                      readOnly: _isAuthenticating,
+                                      controller: _lastNameController,
+                                      decoration: InputDecoration(
+                                        suffix: _lastNameController
+                                                .text.isNotEmpty
+                                            ? IconButton(
+                                                onPressed: !_isAuthenticating
+                                                    ? () => _lastNameController
+                                                        .clear()
+                                                    : null,
+                                                icon: const FaIcon(
+                                                  FontAwesomeIcons.xmark,
+                                                ),
+                                              )
+                                            : null,
+                                        labelText: 'Last Name',
+                                      ),
+                                      onChanged: (value) => _lastName = value,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter a first name';
+                                        }
+                                        if (value.length < 2) {
+                                          return 'Please enter at least 2 characters';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
                             TextFormField(
                               readOnly: _isAuthenticating,
                               controller: _emailController,
@@ -151,8 +230,9 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                 labelText: 'Email Address',
                                 suffix: _emailController.text.isNotEmpty
                                     ? IconButton(
-                                        onPressed: () =>
-                                            _emailController.clear(),
+                                        onPressed: !_isAuthenticating
+                                            ? () => _emailController.clear()
+                                            : null,
                                         icon: const FaIcon(
                                           FontAwesomeIcons.xmark,
                                         ),
@@ -177,12 +257,14 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                               decoration: InputDecoration(
                                 suffix: _passwordController.text.isNotEmpty
                                     ? IconButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            _passwordIsVisible =
-                                                !_passwordIsVisible;
-                                          });
-                                        },
+                                        onPressed: !_isAuthenticating
+                                            ? () {
+                                                setState(() {
+                                                  _passwordIsVisible =
+                                                      !_passwordIsVisible;
+                                                });
+                                              }
+                                            : null,
                                         icon: !_passwordIsVisible
                                             ? const FaIcon(FontAwesomeIcons.eye)
                                             : const FaIcon(
@@ -210,14 +292,14 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                     children: [
                                       RadioListTile(
                                         value: accountRoles[0],
-                                        groupValue: currentOption,
+                                        groupValue: currentRole,
                                         title: Text(
                                           accountRoles[0].capitalize(),
                                         ),
                                         onChanged: !_isAuthenticating
                                             ? (value) {
                                                 setState(() {
-                                                  currentOption =
+                                                  currentRole =
                                                       value.toString();
                                                 });
                                               }
@@ -225,11 +307,11 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                       ),
                                       RadioListTile(
                                         value: accountRoles[1],
-                                        groupValue: currentOption,
+                                        groupValue: currentRole,
                                         onChanged: !_isAuthenticating
                                             ? (value) {
                                                 setState(() {
-                                                  currentOption =
+                                                  currentRole =
                                                       value.toString();
                                                 });
                                               }
@@ -240,11 +322,11 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                       ),
                                       RadioListTile(
                                         value: accountRoles[2],
-                                        groupValue: currentOption,
+                                        groupValue: currentRole,
                                         onChanged: !_isAuthenticating
                                             ? (value) {
                                                 setState(() {
-                                                  currentOption =
+                                                  currentRole =
                                                       value.toString();
                                                 });
                                               }
