@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 // Firebase SDK imports
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 // Screen imports
@@ -15,9 +14,7 @@ import 'package:btad/screens/verify_email_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp();
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
     bool inDebugMode = false;

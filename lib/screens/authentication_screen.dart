@@ -9,6 +9,9 @@ import 'package:string_capitalize/string_capitalize.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Helper imports
+import 'package:btad/helpers/firebase_helper.dart';
+
 FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
 
@@ -54,62 +57,29 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     bool isValid = _formKey.currentState!.validate();
 
     if (!isValid) return;
-    try {
-      // Trigger loading spinner by flagging the authentication boolean
-      setState(() {
-        _isAuthenticating = true;
-      });
-
-      if (!_isLogin) {
-        // Sign users up
-
-        final userCredentials =
-            await _firebaseAuth.createUserWithEmailAndPassword(
-          email: _enteredEmail,
-          password: _enteredPassword,
-        );
-
-        // Create a document of the user using their uid and set custom fields
-        await _firebaseFirestore
-            .collection('users')
-            .doc(userCredentials.user!.email)
-            .set({
-          'email': _enteredEmail,
-          'role': currentRole,
-          'first_name': _firstName,
-          'last_name': _lastName,
-        });
-        setState(() {
-          _isAuthenticating = false;
-        });
-      } else {
-        await _firebaseAuth.signInWithEmailAndPassword(
-          email: _enteredEmail,
-          password: _enteredPassword,
-        );
-        setState(() {
-          _isAuthenticating = true;
-        });
-      }
-    } on FirebaseAuthException catch (error) {
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.message ?? "Authentication failed"),
-          action: SnackBarAction(
-            label: "Dismiss",
-            onPressed: () => ScaffoldMessenger.of(context).clearSnackBars(),
-          ),
-          duration: const Duration(seconds: 5),
-        ),
+    // Trigger loading spinner by flagging the authentication boolean
+    setState(() {
+      _isAuthenticating = true;
+    });
+    if (!_isLogin) {
+      await signUp(
+        firstName: _firstName,
+        lastName: _lastName,
+        email: _enteredEmail,
+        password: _enteredPassword,
+        role: _currentRole,
+        context: context,
       );
-      setState(() {
-        _isAuthenticating = false;
-      });
+    } else {
+      await signIn(
+        email: _enteredEmail,
+        password: _enteredPassword,
+        context: context,
+      );
     }
   }
 
-  String currentRole = accountRoles[0];
+  String _currentRole = accountRoles[0];
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +107,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                     right: 16,
                   ),
                   child: FaIcon(
-                    FontAwesomeIcons.personDress,
+                    FontAwesomeIcons.person,
                     size: 256,
                     color: Theme.of(context).colorScheme.primary,
                   ),
@@ -158,6 +128,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                   Expanded(
                                     child: TextFormField(
                                       readOnly: _isAuthenticating,
+                                      textCapitalization:
+                                          TextCapitalization.words,
                                       controller: _firstNameController,
                                       decoration: InputDecoration(
                                         suffix: _firstNameController
@@ -174,7 +146,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                             : null,
                                         labelText: 'First Name',
                                       ),
-                                      onChanged: (value) => _firstName = value,
+                                      onChanged: (value) => _firstName =
+                                          value.capitalize().trim(),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
                                           return 'Please enter a first name';
@@ -191,6 +164,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                     child: TextFormField(
                                       readOnly: _isAuthenticating,
                                       controller: _lastNameController,
+                                      textCapitalization:
+                                          TextCapitalization.words,
                                       decoration: InputDecoration(
                                         suffix: _lastNameController
                                                 .text.isNotEmpty
@@ -206,7 +181,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                             : null,
                                         labelText: 'Last Name',
                                       ),
-                                      onChanged: (value) => _lastName = value,
+                                      onChanged: (value) =>
+                                          _lastName = value.capitalize().trim(),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
                                           return 'Please enter a first name';
@@ -239,7 +215,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                       )
                                     : null,
                               ),
-                              onChanged: (value) => _enteredEmail = value,
+                              onChanged: (value) =>
+                                  _enteredEmail = value.trim(),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return "Please enter your email address";
@@ -292,14 +269,14 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                     children: [
                                       RadioListTile(
                                         value: accountRoles[0],
-                                        groupValue: currentRole,
+                                        groupValue: _currentRole,
                                         title: Text(
                                           accountRoles[0].capitalize(),
                                         ),
                                         onChanged: !_isAuthenticating
                                             ? (value) {
                                                 setState(() {
-                                                  currentRole =
+                                                  _currentRole =
                                                       value.toString();
                                                 });
                                               }
@@ -307,11 +284,11 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                       ),
                                       RadioListTile(
                                         value: accountRoles[1],
-                                        groupValue: currentRole,
+                                        groupValue: _currentRole,
                                         onChanged: !_isAuthenticating
                                             ? (value) {
                                                 setState(() {
-                                                  currentRole =
+                                                  _currentRole =
                                                       value.toString();
                                                 });
                                               }
@@ -322,11 +299,11 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                       ),
                                       RadioListTile(
                                         value: accountRoles[2],
-                                        groupValue: currentRole,
+                                        groupValue: _currentRole,
                                         onChanged: !_isAuthenticating
                                             ? (value) {
                                                 setState(() {
-                                                  currentRole =
+                                                  _currentRole =
                                                       value.toString();
                                                 });
                                               }
