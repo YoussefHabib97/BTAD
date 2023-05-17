@@ -4,8 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
-final FirebaseFirestore firestore = FirebaseFirestore.instance;
+// Model imports
+import 'package:btad/models/user.dart';
+
+class FirebaseHelper {}
+
+final FirebaseAuth auth = FirebaseAuth.instance;
+final FirebaseFirestore db = FirebaseFirestore.instance;
 
 void showScaffoldMessenger(BuildContext context, FirebaseException error) {
   ScaffoldMessenger.of(context).clearSnackBars();
@@ -19,6 +24,12 @@ void showScaffoldMessenger(BuildContext context, FirebaseException error) {
   );
 }
 
+User? user;
+
+User get currentUser {
+  return user!;
+}
+
 Future<void> signUp({
   required String firstName,
   required String lastName,
@@ -28,11 +39,11 @@ Future<void> signUp({
   required BuildContext context,
 }) async {
   try {
-    await firebaseAuth.createUserWithEmailAndPassword(
+    await auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
-    await firestore.collection('users').doc(email).set({
+    await db.collection('users').doc(email).set({
       'email': email,
       'first_name': firstName,
       'last_name': lastName,
@@ -49,7 +60,7 @@ Future<void> signIn({
   required BuildContext context,
 }) async {
   try {
-    await firebaseAuth.signInWithEmailAndPassword(
+    await auth.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
@@ -60,28 +71,40 @@ Future<void> signIn({
 
 Future<void> signOut(BuildContext context) async {
   try {
-    await firebaseAuth.signOut();
+    await auth.signOut();
   } on FirebaseAuthException catch (error) {
     showScaffoldMessenger(context, error);
   }
 }
 
-Future<void> getUserData({
-  required User user,
-  required BuildContext context,
-}) {
-  return fetchDocumentData(user: user, context: context);
-}
-
-Future<void> fetchDocumentData({
-  required User user,
-  required BuildContext context,
-}) async {
+Future<void> sendVerificationEmail(BuildContext context) async {
   try {
-    final currentUserData =
-        await firestore.collection('users').doc(user.email).get();
-    print(currentUserData);
+    await currentUser.sendEmailVerification();
   } on FirebaseException catch (error) {
     showScaffoldMessenger(context, error);
+  }
+}
+
+Future<UserModel> getUserDetails(String? email) async {
+  final snapshot =
+      await db.collection('users').where("email", isEqualTo: email).get();
+  final userData =
+      snapshot.docs.map((user) => UserModel.fromSnapshot(user)).single;
+  print(userData);
+  return userData;
+}
+
+Future<List<UserModel>> getAllUserDetails(String email) async {
+  final snapshot = await db.collection('users').get();
+  final userData =
+      snapshot.docs.map((user) => UserModel.fromSnapshot(user)).toList();
+  return userData;
+}
+
+Future<void> sendPasswordResetEmail(String email) async {
+  try {
+    auth.sendPasswordResetEmail(email: email);
+  } on FirebaseAuthException catch (error) {
+    print(error);
   }
 }

@@ -5,15 +5,8 @@ import 'package:email_validator/email_validator.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:string_capitalize/string_capitalize.dart';
 
-// Firebase SDK imports
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 // Helper imports
 import 'package:btad/helpers/firebase_helper.dart';
-
-FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
 
 List<String> accountRoles = [
   'admin',
@@ -70,6 +63,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
         role: _currentRole,
         context: context,
       );
+      setState(() => _isAuthenticating = false);
     } else {
       await signIn(
         email: _enteredEmail,
@@ -77,6 +71,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
         context: context,
       );
     }
+    setState(() => _isAuthenticating = false);
   }
 
   String _currentRole = accountRoles[0];
@@ -245,7 +240,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                         icon: !_passwordIsVisible
                                             ? const FaIcon(FontAwesomeIcons.eye)
                                             : const FaIcon(
-                                                FontAwesomeIcons.eyeSlash),
+                                                FontAwesomeIcons.eyeSlash,
+                                              ),
                                       )
                                     : null,
                                 labelText: 'Password',
@@ -260,6 +256,27 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                                 }
                                 return null;
                               },
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    sendPasswordResetEmail(_enteredEmail);
+                                  },
+                                  child: Text(
+                                    "Forgot password",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium!
+                                        .copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                        ),
+                                  ),
+                                ),
+                              ],
                             ),
                             if (!_isLogin)
                               Column(

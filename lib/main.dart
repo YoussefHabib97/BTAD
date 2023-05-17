@@ -6,7 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 // Firebase SDK imports
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
+// Helper imports
+import 'package:btad/helpers/firebase_helper.dart';
 
 // Screen imports
 import 'package:btad/screens/authentication_screen.dart';
@@ -26,16 +28,18 @@ Future<void> main() async {
     if (inDebugMode) {
       return ErrorWidget(details.exception);
     }
-    return Container(
-      alignment: Alignment.center,
-      child: Text(
-        "Error\n${details.exception}",
-        style: const TextStyle(
-          color: Colors.red,
-          fontWeight: FontWeight.bold,
-          fontSize: 24,
+    return Center(
+      child: Container(
+        alignment: Alignment.center,
+        child: Text(
+          "Error\n${details.exception}",
+          style: const TextStyle(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+          textAlign: TextAlign.center,
         ),
-        textAlign: TextAlign.center,
       ),
     );
   };
@@ -56,11 +60,14 @@ class ApplicationRoot extends StatelessWidget {
         textTheme: GoogleFonts.poppinsTextTheme(),
         colorSchemeSeed: Colors.deepPurpleAccent,
         useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          foregroundColor: Colors.deepPurpleAccent,
+        ),
       ),
       darkTheme: ThemeData.dark(useMaterial3: true),
       themeMode: ThemeMode.system,
       home: StreamBuilder(
-        stream: FirebaseAuth.instance.authStateChanges(),
+        stream: auth.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -68,12 +75,12 @@ class ApplicationRoot extends StatelessWidget {
             );
           }
           if (snapshot.hasData) {
-            if (FirebaseAuth.instance.currentUser == null) {
+            if (auth.currentUser == null) {
               return const AuthenticationScreen();
-            } else if (!FirebaseAuth.instance.currentUser!.emailVerified) {
+            } else if (!auth.currentUser!.emailVerified) {
               return const VerifyEmailScreen();
             }
-            return HomeScreen(user: FirebaseAuth.instance.currentUser!);
+            return HomeScreen(user: auth.currentUser!);
           }
           return const AuthenticationScreen();
         },

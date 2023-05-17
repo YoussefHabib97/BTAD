@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Helper imports
+import 'package:btad/helpers/firebase_helper.dart';
+
 // View imports
 import 'package:btad/views/admin_view.dart';
 import 'package:btad/views/doctor_view.dart';
@@ -23,12 +26,6 @@ class _AdaptiveViewWidgetState extends State<AdaptiveViewWidget> {
   String firstName = '';
   String lastName = '';
 
-  @override
-  void initState() {
-    super.initState();
-    getUserData();
-  }
-
   Future<void> getUserData() async {
     final currentUserData = await FirebaseFirestore.instance
         .collection('users')
@@ -40,6 +37,13 @@ class _AdaptiveViewWidgetState extends State<AdaptiveViewWidget> {
       firstName = currentUserData['first_name'];
       lastName = currentUserData['last_name'];
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getUserData();
+    getUserDetails(widget.user.email);
   }
 
   @override
