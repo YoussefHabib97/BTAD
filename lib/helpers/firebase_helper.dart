@@ -100,11 +100,3 @@ Future<List<UserModel>> getAllUserDetails(String email) async {
       snapshot.docs.map((user) => UserModel.fromSnapshot(user)).toList();
   return userData;
 }
-
-Future<void> sendPasswordResetEmail(String email) async {
-  try {
-    auth.sendPasswordResetEmail(email: email);
-  } on FirebaseAuthException catch (error) {
-    print(error);
-  }
-}

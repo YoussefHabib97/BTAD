@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 // Package imports
@@ -24,6 +25,7 @@ class AuthenticationScreen extends StatefulWidget {
 class _AuthenticationScreenState extends State<AuthenticationScreen> {
   // Form parameters
   final _formKey = GlobalKey<FormState>();
+  final _resetFormKey = GlobalKey<FormState>();
   late String _enteredEmail;
   late String _enteredPassword;
   late String _firstName;
@@ -32,6 +34,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
   final _passwordController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _resetPasswordController = TextEditingController();
+
   bool _passwordIsVisible = false;
   bool _isLogin = true;
 
@@ -42,6 +46,28 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     _passwordController.addListener(() => setState(() {}));
     _firstNameController.addListener(() => setState(() {}));
     _lastNameController.addListener(() => setState(() {}));
+    _resetPasswordController.addListener(() => setState(() {}));
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    bool isValid = _resetFormKey.currentState!.validate();
+    if (!isValid) return;
+    try {
+      auth.sendPasswordResetEmail(email: email);
+      Navigator.of(context).pop();
+      setState(() {
+        _resetPasswordController.clear();
+      });
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("An email has been sent to $email"),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } on FirebaseAuthException catch (error) {
+      print(error);
+    }
   }
 
   // Authentication
@@ -260,22 +286,88 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                TextButton(
-                                  onPressed: () {
-                                    sendPasswordResetEmail(_enteredEmail);
-                                  },
-                                  child: Text(
-                                    "Forgot password",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium!
-                                        .copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
+                                if (_isLogin)
+                                  TextButton(
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (context) => Form(
+                                          key: _resetFormKey,
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.max,
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.all(16),
+                                                child: TextFormField(
+                                                  readOnly: _isAuthenticating,
+                                                  controller:
+                                                      _resetPasswordController,
+                                                  autocorrect: false,
+                                                  textCapitalization:
+                                                      TextCapitalization.none,
+                                                  keyboardType: TextInputType
+                                                      .emailAddress,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Email Address',
+                                                    suffix:
+                                                        _resetPasswordController
+                                                                .text.isNotEmpty
+                                                            ? IconButton(
+                                                                onPressed: !_isAuthenticating
+                                                                    ? () => _resetPasswordController
+                                                                        .clear()
+                                                                    : null,
+                                                                icon:
+                                                                    const FaIcon(
+                                                                  FontAwesomeIcons
+                                                                      .xmark,
+                                                                ),
+                                                              )
+                                                            : null,
+                                                  ),
+                                                  onChanged: (value) =>
+                                                      _enteredEmail =
+                                                          value.trim(),
+                                                  validator: (value) {
+                                                    if (value == null ||
+                                                        value.isEmpty) {
+                                                      return "Please enter your email address";
+                                                    }
+                                                    if (!EmailValidator
+                                                        .validate(value)) {
+                                                      return "Please enter a valid email address";
+                                                    }
+                                                    return null;
+                                                  },
+                                                ),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  sendPasswordResetEmail(
+                                                    _enteredEmail,
+                                                  );
+                                                },
+                                                child: const Text("Send Email"),
+                                              ),
+                                              const SizedBox(height: 16),
+                                            ],
+                                          ),
                                         ),
+                                      );
+                                    },
+                                    child: Text(
+                                      "I forgot my password",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium!
+                                          .copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                          ),
+                                    ),
                                   ),
-                                ),
                               ],
                             ),
                             if (!_isLogin)

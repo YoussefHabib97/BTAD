@@ -23,17 +23,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(user.email!),
-        actions: [
-          IconButton(
-            onPressed: signOut,
-            icon: const FaIcon(
-              FontAwesomeIcons.arrowRightFromBracket,
-            ),
-          ),
-        ],
-      ),
       body: AdaptiveViewWidget(user: user),
     );
   }
